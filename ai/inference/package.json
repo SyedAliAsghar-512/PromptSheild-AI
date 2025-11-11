@@ -1,0 +1,17 @@
+{
+  "name": "promptshield-inference",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Node.js backend for malicious prompt classification (Transformers.js).",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "classify": "node classify.js",
+    "prepare-model": "npx @xenova/transformers convert --model ../model --output ./model-js --task text-classification --quantize 8"
+  },
+  "dependencies": {
+    "@xenova/transformers": "2.16.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  }
+}

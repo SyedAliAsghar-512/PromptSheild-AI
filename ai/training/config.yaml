@@ -1,0 +1,35 @@
+seed: 42
+model_name: roberta-base
+output_dir: ../model
+max_length: 256
+train_sources:
+  benign_dirs:
+    - data/benign
+  malicious_dirs:
+    - data/malicious
+  file_glob: "**/*.*"
+  text_columns: ["text","prompt","instruction","question","input","message","content","query"]
+balance:
+  enabled: true
+  strategy: downsample
+  target_ratio: 0.5
+split:
+  test_size: 0.1
+  val_size: 0.1
+training:
+  num_train_epochs: 3
+  per_device_train_batch_size: 16
+  per_device_eval_batch_size: 32
+  learning_rate: 2e-5
+  weight_decay: 0.01
+  early_stopping_patience: 2
+  evaluation_strategy: epoch
+  save_strategy: epoch
+  metric_for_best_model: f1
+  load_best_model_at_end: true
+class_weighting:
+  enabled: true
+inference:
+  threshold: 0.5
+logging:
+  sample_preview: 3
