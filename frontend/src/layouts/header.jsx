@@ -1,109 +1,134 @@
-import React, {useEffect, useState} from "react";
-import Search from "./Search";
-import "../../App.css"
-import { useGetMeQuery } from "../../redux/api/userApi";
+import React, { useEffect, useState } from "react";
+import "../App.css";
+import { useGetMeQuery } from "../redux/api/userApi";
 import { useSelector } from "react-redux";
-import { Link, unstable_HistoryRouter, useNavigate } from "react-router-dom";
-import { useLazyLogoutQuery } from "../../redux/api/authApi";
-import DarkModeToggle from "../layouts/DarkModeToggle"
-import toast from "react-hot-toast"
-import { setIsAuthenticated } from "../../redux/features/userSlice";
-import Sidebar from "./SideBar";
+import { Link, useNavigate } from "react-router-dom";
+import { useLazyLogoutQuery } from "../redux/api/authApi";
+import toast from "react-hot-toast";
 
 const Header = () => {
+  const { user } = useSelector((state) => state.auth);
+  const { isLoading } = useGetMeQuery();
+  const navigate = useNavigate();
+  const [logout] = useLazyLogoutQuery();
 
-  const {user} = useSelector((state) => state.auth)
-  const [color, setColor] = useState("")
-  const {isLoading } = useGetMeQuery()
-  const [textColor, setTextColor] = useState("")
-  const [itemColor, setItemColor] = useState("")
-  const savedMode = localStorage.getItem('darkMode') === 'true';
-  const navigate = useNavigate()
+  const [darkMode, setDarkMode] = useState(
+    localStorage.getItem("darkMode") === "true"
+  );
+  const [openMenu, setOpenMenu] = useState(false);
 
-    const [logout] = useLazyLogoutQuery()
+  useEffect(() => {
+    localStorage.setItem("darkMode", darkMode.toString());
+  }, [darkMode]);
 
-    const LogoutHandler =() => {
-      logout();
-      handleClick()
-      }
-  
-      const handleClick = () => {
-          setTimeout(() => {
-              navigate(0)
-          }, 1000); 
-      };
+  const LogoutHandler = async () => {
+    try {
+      await logout().unwrap();
+      toast.success("Logged out successfully");
+      setTimeout(() => navigate(0), 800);
+    } catch {
+      toast.error("Logout failed");
+    }
+  };
 
-      const refresh = () => {
-        navigate("/dashboard")
-      }
-    
-      useEffect(() => {
-        if(savedMode) {
-           setColor("#0e1011")
-           setTextColor("white")
-           setItemColor("black")
-        }
-          else {
-             setColor("#0d2448")
-             setTextColor("black")
-             setItemColor("white")
-          }
-         
-      })
-    
-      // Simulate a redirection (for example, after a login)
-      const handleRedirect = () => {
-        setTimeout(() => {
-          toast.success("Redirecting")
-       }, 3000); 
-      };
+  if (!user && isLoading) return null;
 
-    return (
-      <>     
-         { user ? (
-<>
-<nav className="navbar row" style={{ backgroundColor: "#055993"}}>
-<div className="col-12 col-md-6 col-sm-6">
-        <div className="navbar-brand">
-        <img className="logoimgg" src="/images/logo.png" width="60px" height="60px" alt="Nust"/>
-            <div style={{marginLeft: "auto", float: "right", marginTop: "3px"}}>
-            <div className="ms-4 dropdown" >
-          <button
-            className="drop-btn dropdown-toggle text-white "
-            type="button"
-            id="dropDownMenuButton"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-            style={{margin: "5px"}}
-          >
-            <span className="username">{user?.student_info?.name}</span>
-          </button>
-          
-          <div className="dropdown-menu w-100 fade-in-bottom" aria-labelledby="dropDownMenuButton" style={{ backgroundColor: "white", height: "100%"}}>
-
-            <Link  className="dropdown-item text-danger" id="drop" onClick={LogoutHandler} to=""> Logout</Link>
-          </div>
-        </div>
+  return (
+    <>
+      {user && (
+        <header className="ps-top-nav">
+          <div className="ps-top-nav-inner">
+            {/* Brand */}
+            <div className="ps-brand">
+              <div className="ps-brand-icon">
+                <img
+                  src="/images/logo.png"
+                  alt="PromptShield"
+                  width={26}
+                  height={26}
+                  style={{
+                    filter: "drop-shadow(0 0 6px rgba(34,211,238,0.8))",
+                  }}
+                />
+              </div>
+              <div className="ps-brand-title">
+                <span className="ps-brand-title-main">PromptShield AI</span>
+                <span className="ps-brand-title-sub">
+                  Safety &amp; Policy Guard
+                </span>
+              </div>
             </div>
-            <p className="name">NUST Student Portal</p>
-      </div>
-      </div>
-        </nav>
-        </>
-): (
-  !isLoading && (
-    <div></div>
-  )
-)}
 
+            {/* Center nav (docs/api/dashboard) */}
+            <nav className="ps-nav-links">
+              <Link to="/docs" className="ps-nav-link">
+                Docs
+              </Link>
+              <Link to="/api" className="ps-nav-link">
+                API
+              </Link>
+              <Link to="/dashboard" className="ps-nav-pill">
+                Dashboard
+              </Link>
+            </nav>
 
+            {/* Right: dark mode + user dropdown */}
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <button
+                className="ps-mode-toggle"
+                type="button"
+                onClick={() => setDarkMode((d) => !d)}
+              >
+                {darkMode ? "🌙" : "☀️"}
+              </button>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+              <div className="ps-dropdown">
+                <button
+                  type="button"
+                  className="ps-user-pill"
+                  onClick={() => setOpenMenu((o) => !o)}
+                >
+                  <div className="ps-user-avatar">
+                    {user?.student_info?.name?.[0] ||
+                      user?.name?.[0] ||
+                      "U"}
+                  </div>
+                  <span>
+                    {user?.student_info?.name || user?.name || "User"}
+                  </span>
+                </button>
 
-    <script src="https://kit.fontawesome.com/9edb65c86a.js"></script>
+                <div
+                  className={
+                    "ps-dropdown-menu" + (openMenu ? " open" : "")
+                  }
+                >
+                  <div
+                    className="ps-dropdown-item"
+                    onClick={() => {
+                      setOpenMenu(false);
+                      navigate("/profile");
+                    }}
+                  >
+                    Profile
+                  </div>
+                  <div
+                    className="ps-dropdown-item ps-dropdown-item-danger"
+                    onClick={() => {
+                      setOpenMenu(false);
+                      LogoutHandler();
+                    }}
+                  >
+                    Logout
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+      )}
+    </>
+  );
+};
 
-</>
-    )
-}
-
-export default Header
+export default Header;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useResetPasswordMutation } from "../../redux/api/userApi";
+import { useResetPasswordMutation } from "../redux/api/userApi";
 import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
