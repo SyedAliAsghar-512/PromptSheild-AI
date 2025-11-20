@@ -1,156 +1,209 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import { useLoginMutation } from "../../redux/api/authApi";
-import toast from "react-hot-toast";
 import { useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
-import MetaData from "../layouts/MetaData"
+import MetaData from "../layouts/MetaData";
+import toast from "react-hot-toast";
 import { useGetMeQuery } from "../../redux/api/userApi";
 
 const Login = () => {
-    const [username, setUsername] = useState("")
-    const [password, setPassword] = useState("")
-    const [showPassword, setshowPassword] = useState(true);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [darkMode, setDarkMode] = useState(
+    localStorage.getItem("darkMode") === "true"
+  );
 
-    const navigate = useNavigate()
+  const navigate = useNavigate();
+  const [login, { isLoading, error }] = useLoginMutation();
+  const { isAuthenticated } = useSelector((state) => state.auth);
 
-    const [login, {isLoading, error}] = useLoginMutation()
-    const {isAuthenticated, user} = useSelector((state) => state.auth)
-    const {data} = useGetMeQuery()
-    //console.log(user);
+  const { data } = useGetMeQuery();
 
-    const [color, setColor] = useState("")
-    const [textColor, setTextColor] = useState("")
-    const savedMode = localStorage.getItem('darkMode') === 'true';
-    const token = localStorage.getItem('token');
-
-    const [showSlowMessage, setShowSlowMessage] = useState(false);
+  const toggleDarkMode = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    localStorage.setItem("darkMode", newMode);
+  };
 
   useEffect(() => {
-    let timeoutId;
-    if (isLoading) {
-      timeoutId = setTimeout(() => {
-        setShowSlowMessage(true);
-      }, 30000); // 60 seconds
-    } else {
-      clearTimeout(timeoutId);
-      setShowSlowMessage(false);
+    if (isAuthenticated) navigate("/dashboard");
+
+    if (error) {
+      toast.error(error?.data?.message);
+    }
+  }, [error, isAuthenticated]);
+
+  const submitHandler = (e) => {
+    e.preventDefault();
+
+    if (!username || !password) {
+      toast.error("Please fill all fields");
+      return;
     }
 
-    return () => clearTimeout(timeoutId);
-  }, [isLoading]);
-  
-    useEffect(() => {
-      if(savedMode) {
-         setColor("grey")
-         setTextColor("white")
-      }
-        else {
-           setColor("grey")
-           setTextColor("black")
-        }
-      
-    })
+    login({ username, password });
+  };
 
+  return (
+    <>
+      <MetaData title="Login - Prompt Shield AI" />
 
-    useEffect(() => {
-      if (isAuthenticated){
-        navigate(`/dashboard`)
-        }
-
-        if(error) {
-          toast.error(error?.data?.message, {
-            style: {
-              marginTop: "env(safe-area-inset-top)", // Adjust for safe area
-            },
-          });
-        } 
-
-    }, [error, isAuthenticated])
-
-    const submitHandler = (e) => {
-        e.preventDefault()
-        
-        const loginData = {
-            username,
-            password,
-        }
-        login(loginData)
-    }
- 
-    return (
-        <>
-        <nav className="navbar row" style={{ backgroundColor: "#055993"}}>
-<div className="col-12 col-md-6">
-        <div className="navbar-brand" >
-        <img className="logoimgg" src="/images/logo.png" width="60px" height="60px" alt="Nust"/>
-            <div style={{textAlign: "center"}}>
-            <h5 className="name" style={{marginRight: "10%", fontSize: "16px"}}>NUST Student Portal</h5>
-            </div>
-            </div>
-            </div>
-            </nav>
-        <MetaData title="Login - Qalam" />
-        <div className="container fade-in-left" style={{ padding: "25px"}}>
-        <div className=" row wrapper">
-
-      <div className="card rounded col-10 col-lg-5" style={{ boxShadow: "0 2px 5px rgba(0.2, 0.2, 0.2, 0.5)", backgroundColor: "transparent", border: "0.1px solid white"}}>
-        <form
-          style={{ backgroundColor: "white", color: "grey"}}
-          onSubmit={submitHandler}
+      <div
+        className={`login-container ${darkMode ? "dark" : "light"}`}
+        style={{
+          minHeight: "100vh",
+          transition: "0.4s",
+        }}
+      >
+        {/* Header */}
+        <nav
+          style={{
+            backgroundColor: darkMode ? "#0d1b2a" : "#055993",
+            padding: "14px 20px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            color: "white",
+          }}
         >
-          <img className="loginn" src="/images/loginn.png"></img>
-          <div className="mb-3">
-            <label htmlFor="email_field" className="form-label">Login ID</label>
-            <input type="text"
-              id="username_field"
-              className="form-control"
-              name="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-            
-          />
-            </div>
-
-          <div className="mb-3">
-            <label htmlFor="password_field" className="form-label">Password</label>
-            <input type="password"
-              id="password_field"
-              className="form-control"
-              name="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            
-          />
-       
+          <div className="d-flex align-items-center">
+            <img src="/images/logo.png" width="55" height="55" alt="Logo" />
+            <h4 style={{ marginLeft: "10px", marginTop: "6px" }}>
+              Prompt Shield AI
+            </h4>
           </div>
 
-          {!isLoading ? (
-              <div className="center-container">
-              <button id="login_button" type="submit" className="login_btn">
-                Login
+          {/* Dark Mode Toggle */}
+          <button
+            onClick={toggleDarkMode}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "white",
+              fontSize: "20px",
+              cursor: "pointer",
+            }}
+          >
+            {darkMode ? "🌙" : "☀️"}
+          </button>
+        </nav>
+
+        {/* Login Card */}
+        <div className="d-flex justify-content-center align-items-center">
+          <div
+            className="login-box"
+            style={{
+              background: darkMode ? "#1b263b" : "white",
+              color: darkMode ? "white" : "#333",
+              width: "380px",
+              marginTop: "50px",
+              borderRadius: "18px",
+              padding: "30px",
+              boxShadow: darkMode
+                ? "0px 4px 25px rgba(0,0,0,0.4)"
+                : "0px 4px 25px rgba(0,0,0,0.15)",
+              animation: "fadeIn 0.6s ease",
+            }}
+          >
+            <h3 style={{ textAlign: "center", marginBottom: "25px" }}>
+              Login
+            </h3>
+
+            <form onSubmit={submitHandler}>
+              {/* Username */}
+              <div className="mb-3">
+                <label className="form-label">Login ID</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoFocus
+                  style={{
+                    background: darkMode ? "#0d1b2a" : "#f5f5f5",
+                    color: darkMode ? "white" : "black",
+                  }}
+                />
+              </div>
+
+              {/* Password + Eye Icon */}
+              <div className="mb-3 position-relative">
+                <label className="form-label">Password</label>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="form-control"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  style={{
+                    background: darkMode ? "#0d1b2a" : "#f5f5f5",
+                    color: darkMode ? "white" : "black",
+                  }}
+                />
+
+                <span
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: "absolute",
+                    right: "12px",
+                    top: "42px",
+                    cursor: "pointer",
+                    fontSize: "18px",
+                  }}
+                >
+                  {showPassword ? "🙈" : "👁️"}
+                </span>
+              </div>
+
+              {/* Login Button */}
+              <button
+                type="submit"
+                className="btn w-100"
+                style={{
+                  background: "#055993",
+                  color: "white",
+                  padding: "10px",
+                  borderRadius: "8px",
+                  marginTop: "10px",
+                }}
+                disabled={isLoading}
+              >
+                {isLoading ? "Logging in..." : "Login"}
               </button>
-              </div>
-            ) : (
-              <div className="ms-2">
-                <div className="animation-container">
-                  <div className="ball ball-1"></div>
-                  <div className="ball ball-2"></div>
-                </div>
-                {showSlowMessage && (
-            <div className="mt-2 text-danger">Please wait, Your internet is slow...</div>
-          )}
-              </div>
-              
-            )}
+            </form>
 
-        </form>
+            {/* Developer Link */}
+            <div className="text-center mt-3">
+              <Link to="/about-developer">
+                <button
+                  className="btn"
+                  style={{
+                    background: darkMode ? "#283044" : "#e6e6e6",
+                    color: darkMode ? "white" : "black",
+                    width: "100%",
+                    borderRadius: "8px",
+                    marginTop: "8px",
+                  }}
+                >
+                  About Developer
+                </button>
+              </Link>
+            </div>
+          </div>
+        </div>
       </div>
-      <Link to = "/about-developer" style={{textAlign: "center"}}><button className="developer_btn">About Developer</button></Link>
-    </div>
-    </div>
 
+      {/* Fade animation */}
+      <style>
+        {`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}
+      </style>
     </>
-    )
-}
+  );
+};
 
-export default Login
+export default Login;
